@@ -1,6 +1,30 @@
 <html>
   <head>
     <script src="htmlcanvas.js"></script>
+    <script>
+      /**
+       * Provides requestAnimationFrame in a cross browser way.
+       * http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+       */
+
+      if ( !window.requestAnimationFrame ) {
+
+	      window.requestAnimationFrame = ( function() {
+
+		      return window.webkitRequestAnimationFrame ||
+		      window.mozRequestAnimationFrame ||
+		      window.oRequestAnimationFrame ||
+		      window.msRequestAnimationFrame ||
+		      function( /* function FrameRequestCallback */ callback, /* DOMElement Element */ element ) {
+
+			      window.setTimeout( callback, 1000 / 60 );
+
+		      };
+
+	      } )();
+
+      }
+    </script>
   </head>
   <body>
     <script>
@@ -44,9 +68,9 @@
         }
         ctx.restore();
         c.update();
-        window.webkitRequestAnimationFrame(animate);
+        window.requestAnimationFrame(animate, c.container);
       };
-      window.webkitRequestAnimationFrame(animate);
+      window.requestAnimationFrame(animate, c.container);
     </script>
   </body>
 </html>
