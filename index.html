@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <script src="htmlcanvas.js"></script>
+  </head>
+  <body>
+    <script>
+      var c = new HTMLCanvas(120, 120);
+      document.body.appendChild(c.container);
+      var ctx = c.getContext();
+      var animate = function(t) {
+        var d = (t/1000)%(Math.PI*2);
+        ctx.clearRect(0,0,c.width, c.height);
+        ctx.save();
+        ctx.scale(0.5, 0.5);
+        for (var i=0; i<20; i++) {
+          var a = d+Math.PI*2*i/20;
+          ctx.save();
+          ctx.translate(120,120);
+          ctx.rotate(a);
+          ctx.beginPath();
+          ctx.moveTo(40, 0);
+          ctx.lineTo(60, 20);
+          ctx.lineTo(80, 0);
+          ctx.lineTo(60, -20);
+          ctx.closePath();
+          ctx.fillStyle = 'black';
+          ctx.fill();
+          ctx.restore();
+        }
+        for (var i=0; i<20; i++) {
+          var a = d+Math.PI*2*i/20;
+          ctx.save();
+          ctx.translate(120,120);
+          ctx.rotate(a);
+          ctx.beginPath();
+          ctx.moveTo(50, 0);
+          ctx.lineTo(60, 10);
+          ctx.lineTo(70, 0);
+          ctx.lineTo(60, -10);
+          ctx.closePath();
+          ctx.fillStyle = '#FFCC00';
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        c.update();
+        window.webkitRequestAnimationFrame(animate);
+      };
+      window.webkitRequestAnimationFrame(animate);
+    </script>
+  </body>
+</html>
