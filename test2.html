@@ -1,13 +1,14 @@
 <html>
   <head>
     <style>
-      .hc-1 .pixel:hover {
-        z-index: 1;
-        border-radius: 16px;
-        margin-left: -16px;
-        margin-top: -16px;
-        width: 32px;
-        height: 32px;
+      .pixel {
+        border-top: 1px solid black;
+      }
+      .y16 {
+        margin-left: 16px;
+      }
+      .x16 {
+        margin-top: 16px;
       }
     </style>
     <script src="htmlcanvas.js"></script>
@@ -94,7 +95,7 @@
   </head>
   <body>
     <script>
-      var c = new HTMLCanvas(120, 120, 1, 0);
+      var c = new HTMLCanvas(120, 120, 3, 1);
       //document.body.appendChild(c.canvas);
       document.body.appendChild(c.container);
       var ctx = c.getContext('2d');
@@ -172,7 +173,7 @@
 
       function init()
       {
-	      var canvas = new HTMLCanvas(120, 120, 1, 0);
+	      var canvas = new HTMLCanvas(120, 120, 3, 1);
 	      //document.body.appendChild(canvas.canvas);
 	      canvas.canvas.style.backgroundColor = 'black';
 	      document.body.appendChild(canvas.container);

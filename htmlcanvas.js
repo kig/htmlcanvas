@@ -1,31 +1,39 @@
-var HTMLCanvas = function(width, height) {
+var HTMLCanvas = function(width, height, pixelSize, pixelMargin) {
+  this.pixelSize = pixelSize || 1;
+  this.pixelMargin = pixelMargin || 0;
   this.canvas = document.createElement('canvas');
   this.contextType = null;
   this.container = document.createElement('div');
+  this.uid = HTMLCanvas.uid++;
+  this.container.className = 'HTMLCanvas hc-'+this.uid;
   this.container.style.position = 'relative';
   this.container.style.display = 'inline-block';
   this.width = width;
   this.height = height;
-  this.container.style.width = this.width + 'px';
-  this.container.style.height = this.height + 'px';
+  this.container.style.width = this.width*this.pixelSize+this.pixelMargin*(this.width-1) + 'px';
+  this.container.style.height = this.height*this.pixelSize+this.pixelMargin*(this.height-1) + 'px';
 
   this.image = document.createElement('div');
   this.canvas.width = this.width;
   this.canvas.height = this.height;
   this.pixels = [];
+  var pxsz = this.pixelSize + 'px';
+  var style = document.createElement('style');
+  style.innerHTML = '.hc-'+this.uid+' .pixel { width: '+pxsz+'; height: '+pxsz+'; }';
+  document.querySelector('head').appendChild(style);
   for (var y=0; y<this.height; y++) {
     for (var x=0; x<this.width; x++) {
       var pixel = document.createElement('div');
+      pixel.className = 'pixel x'+ x + ' y' + y;
       pixel.style.position = 'absolute';
-      pixel.style.top = y + 'px';
-      pixel.style.left = x + 'px';
-      pixel.style.width = '1px';
-      pixel.style.height = '1px';
+      pixel.style.top = y*(this.pixelSize+this.pixelMargin) + 'px';
+      pixel.style.left = x*(this.pixelSize+this.pixelMargin) + 'px';
       this.pixels.push(pixel);
       this.container.appendChild(pixel);
     }
   }
 };
+HTMLCanvas.uid = 0;
 
 HTMLCanvas.prototype.update = function() {
   if (this.contextType == null) {
