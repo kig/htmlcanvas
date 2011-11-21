@@ -25,12 +25,69 @@
 
       }
     </script>
+
+    <script id="vertexshader" type="x-shader/x-vertex">
+
+    attribute vec2 position;
+    uniform float t;
+    varying vec3 s[4];
+
+    void main()
+    {
+	    gl_Position = vec4(position, 0.0, 1.0);
+	    s[0] = vec3(0);
+	    s[3] = vec3(sin(abs(t * .0001)), cos(abs(t * .0001)), 0);
+	    s[1] = s[3].zxy;
+	    s[2] = s[3].zzx;
+    }
+    </script>
+
+    <script id="fragmentshader" type="x-shader/x-fragment">
+
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec3 s[4];
+
+    void main()
+    {
+	    float t, b, c, h = 0.0;
+	    vec3 m, n;
+	    vec3 p = vec3(.2);
+	    vec3 d = normalize(.001 * gl_FragCoord.rgb - p);
+
+	    for (int i = 0; i < 4; i++)
+	    {
+		    t=2.0;
+		    for (int i = 0; i < 4; i++)
+		    {
+			    b = dot(d, n = s[i] - p);
+			    c = b * b + .2 - dot(n, n);
+			    if (b - c < t)
+			    {
+				    if (c > 0.0)
+				    {
+					    m = s[i];
+					    t = b - c;
+				    }
+			    }
+		    }
+		    p += t * d;
+		    d = reflect(d, n = normalize(p - m));
+		    h += pow(n.x * n.x, 44.) + n.x * n.x * .2;
+	    }
+	    gl_FragColor = vec4(h, h * h, h * h * h * h, h);
+    }
+    </script>
+    <title>What is this travesty?!</title>
   </head>
   <body>
     <script>
       var c = new HTMLCanvas(120, 120);
+      //document.body.appendChild(c.canvas);
       document.body.appendChild(c.container);
-      var ctx = c.getContext();
+      var ctx = c.getContext('2d');
       var animate = function(t) {
         var d = (t/1000)%(Math.PI*2);
         ctx.clearRect(0,0,c.width, c.height);
@@ -68,9 +125,125 @@
         }
         ctx.restore();
         c.update();
-        window.requestAnimationFrame(animate, c.container);
+        window.requestAnimationFrame(animate);
       };
-      window.requestAnimationFrame(animate, c.container);
+      window.requestAnimationFrame(animate);
+    </script>
+    <script>
+      var pixgl = {
+          compileShader: function (gl, id, type)
+          {
+          	var shader_el = document.getElementById(id);
+          	var shader = gl.createShader(type);
+          	if (!shader)
+          	{
+                  throw "could not create shader";
+          	}
+          
+          	gl.shaderSource(shader, shader_el.text);
+          	gl.compileShader(shader);
+          
+          	if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS))
+          	{
+                  throw "Error compiling " + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
+          	}
+          
+          	return shader;
+          }
+      };
+
+      var vertexshader, fragmentshader, program;
+      var texture, vertices, indices;
+
+      function reshape(canvas,gl,w,h)
+      {
+	      gl.viewport(0, 0, w, h);
+      }
+
+      function init()
+      {
+	      var canvas = new HTMLCanvas(120, 120);
+	      //document.body.appendChild(canvas.canvas);
+	      //canvas.canvas.style.backgroundColor = 'black';
+	      document.body.appendChild(canvas.container);
+	      var gl = canvas.getContext('experimental-webgl');
+
+          try
+          {
+          	vertexshader = pixgl.compileShader(gl, "vertexshader", gl.VERTEX_SHADER);
+          	fragmentshader = pixgl.compileShader(gl, "fragmentshader", gl.FRAGMENT_SHADER);
+          }
+          catch (e)
+          {
+              console.log(e);
+          }
+
+	      program = gl.createProgram();
+	      if (!program)
+	      {
+		      return null;
+	      }
+
+	      gl.attachShader(program, vertexshader);
+	      gl.attachShader(program, fragmentshader);
+
+	      gl.bindAttribLocation(program,0,"position");
+
+	      gl.linkProgram(program);
+
+	      if (!gl.getProgramParameter(program,gl.LINK_STATUS))
+	      {
+		      console.log("Error in program linking:" + gl.getProgramInfoLog(program));
+		      return null;
+	      }
+
+	      gl.useProgram(program);
+
+	      reshape(canvas, gl, canvas.width, canvas.height);
+
+	      gl.enableVertexAttribArray(0);
+	
+	      vertices = gl.createBuffer();
+	      gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
+	      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ -1,-1,  -1,1,  1,-1, 1,1, ]), gl.STATIC_DRAW);
+	      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+	      indices = gl.createBuffer();
+	      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
+	      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Int16Array([ 0,1,2,3 ]), gl.STATIC_DRAW);
+
+	      return {gl:gl, canvas:canvas};
+      }
+
+      function draw(gl, t)
+      {
+	      gl.uniform1f(gl.getUniformLocation(program,"t"), t * 100);
+	      gl.drawElements(gl.TRIANGLE_STRIP, 4, gl.UNSIGNED_SHORT, 0);
+	      gl.flush();
+      }
+
+      function main()
+      {
+	      var glc = init();
+	      if (!glc.gl)
+	      {
+		      return;
+	      }
+
+	      var start = new Date().getTime();
+
+	      draw(glc.gl, 0);
+	      glc.canvas.update();
+	
+	      var animategl = function(timestamp) 
+	      {
+		      draw(glc.gl, (timestamp - start) / 1000 * 30);
+        	glc.canvas.update();
+          window.requestAnimationFrame(animategl);
+	      };
+        window.requestAnimationFrame(animategl);
+      }
+      main();
     </script>
   </body>
 </html>
